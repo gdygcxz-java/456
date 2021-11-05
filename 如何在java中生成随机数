@@ -1,0 +1,100 @@
+Java生成随机数我总共总结了5种方式：
+（一）Math.random（）静态方法：
+产生的随机数是0-1之间的一个double，0<=random<=1
+使用：
+for(int i=0;i<10;i++)
+{
+    System.out.println(Math.println());
+}
+实现原理：
+When this method is frist called, it creates a single new pseudorandom-number 
+generator, exactly as if by the expression new java.util.Random(). This new pseudora-
+-ndom-number generator is used thereafter for all calls to this method and is used
+nowhere else.This method is properly synchronized to allow correct use by more than 
+one thread. However, if many threads need to generate pseudorandom numbers at a great 
+rate, it may reduce contention for each thread to have its own pseudorandom-number 
+generator.
+当第一次调用 Math.random() 方法时，自动创建了一个伪随机数生成器，实际上用的是 new java.util.Random()。
+当接下来继续调用 Math.random() 方法时，就会使用这个新的伪随机数生成器。initRNG() 方法是 synchronized 
+的，因此在多线程情况下，只有一个线程会负责创建伪随机数生成器（使用当前时间作为种子），其他线程则利用该伪随机
+数生成器产生随机数。
+
+（二）java.util.Random工具类：
+基本算法：linear congruential pseudorandom number generator (LGC) 线性同余法伪随机数生成器缺点：可
+预测。An attacker will simply compute the seed from the output values observed. This takes 
+significantly less time than 2^48 in the case of java.util.Random. 从输出中可以很容易计算出种子值。
+It is shown that you can predict future Random outputs observing only two(!) output values in
+-ime roughly 2^16. 因此可以预测出下一个输出的随机数。You should never use an LCG for security-crit-
+cal purposes.在注重信息安全的应用中，不要使用 LCG 算法生成随机数，请使用 SecureRandom。
+使用：
+Random random = new Random();
+for (int i = 0; i < 5; i++) {
+ System.out.println(random.nextInt());
+}
+Random类提供的方法：API
+
+    nextBoolean() - 返回均匀分布的 true 或者 false
+    nextBytes(byte[] bytes)
+    nextDouble() - 返回 0.0 到 1.0 之间的均匀分布的 double
+    nextFloat() - 返回 0.0 到 1.0 之间的均匀分布的 float
+    nextGaussian()- 返回 0.0 到 1.0 之间的高斯分布（即正态分布）的 double
+    nextInt() - 返回均匀分布的 int
+    nextInt(int n) - 返回 0 到 n 之间的均匀分布的 int （包括 0，不包括 n）
+    nextLong() - 返回均匀分布的 long
+    setSeed(long seed) - 设置种子
+
+（三）java.util.concurrent.ThreadLocalRandom工具类
+ThreadLocalRandom是JDK7之后提供，也是继承至java.util.Random。每一个线程有一个独立的随机数生成器，用于开发生
+成随机数，能够解决多个线程发生的竞争争夺，效率更高。
+使用：
+public class JavaRandom {
+ public static void main(String args[]) {
+ new MyThread().start();
+ new MyThread().start();
+ }
+}
+class MyThread extends Thread {
+ public void run() {
+ for (int i = 0; i < 2; i++) {
+ System.out.println(Thread.currentThread().getName() + ": " + ThreadLocalRandom.current().nextDouble());
+ }
+ }
+}
+
+（四）java.Security.SecureRandom:
+这个也是继承自java.util.Random。SecureRandom提供加密的强随机生成器（RNG），要求种子必须是不可预知的，产生非确
+定性输出。SecureRandom也提供了与实现无关的算法，因此，调用方（应用程序代码）会请求特定的RNG 算法并将它传回到算法
+的SecureRandom对象中。如果仅指定算法名称，如下所示：SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+如果既指定了算法名称又指定了包提供程序，如下所示：SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
+使用：
+SecureRandom random1 = SecureRandom.getInstance("SHA1PRNG");
+SecureRandom random2 = SecureRandom.getInstance("SHA1PRNG");
+for (int i = 0; i < 5; i++) {
+ System.out.println(random1.nextInt() + " != " + random2.nextInt());
+}；
+
+（五）随机字符串：
+可以使用Apache Commons-Lang包中的RandoStringUtils类。Maven依赖如下：
+<dependency>
+ <groupId>commons-lang</groupId>
+ <artifactId>commons-lang</artifactId>
+ <version>2.6</version>
+</dependency>
+使用：
+public class RandomStringDemo {
+ public static void main(String[] args) {
+ // Creates a 64 chars length random string of number.
+ String result = RandomStringUtils.random(64, false, true);
+ System.out.println("random = " + result);
+ // Creates a 64 chars length of random alphabetic string.
+ result = RandomStringUtils.randomAlphabetic(64);
+ System.out.println("random = " + result);
+ // Creates a 32 chars length of random ascii string.
+ result = RandomStringUtils.randomAscii(32);
+ System.out.println("random = " + result);
+ // Creates a 32 chars length of string from the defined array of
+ // characters including numeric and alphabetic characters.
+ result = RandomStringUtils.random(32, 0, 20, true, true, "qw32rfHIJk9iQ8Ud7h0X".toCharArray());
+ System.out.println("random = " + result);
+ }
+}
